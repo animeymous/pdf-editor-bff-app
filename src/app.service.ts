@@ -17,16 +17,27 @@ export class AppService {
 
     try{
       const pdfDoc = await PDFDocument.load(await readFile(`${path}/${input}`));
+      const form = pdfDoc.getForm();
       let fieldNames = pdfDoc.getForm().getFields();
+
       let specificFieldNameArray = [];
+      let specificFieldNameValueArray = [];
 
       fieldNames.map((f) => {
         let specificFieldName = f.getName();
+
+        if(f.constructor.name ===  "PDFTextField"){
+          specificFieldNameValueArray.push(form.getTextField(specificFieldName).getText())
+        }else if (f.constructor.name  === "PDFRadioGroup"){
+          specificFieldNameValueArray.push(form.getRadioGroup(specificFieldName).getSelected())
+        }
+        
         specificFieldNameArray.push(specificFieldName)
       });
     
       return {
         'specificFieldNameArray': specificFieldNameArray,
+        'specificFieldNameValueArray': specificFieldNameValueArray
       };
     
     } catch (error) {
@@ -45,7 +56,7 @@ export class AppService {
       let fieldName = fieldNames[index];
       if(element?.value){
         if(fieldName.constructor.name === "PDFTextField"){
-          form.getTextField(element?.key).setText(element?.value);
+          form.getTextField(element?.key).setText(`${element?.value}_TX`);
         }else if (fieldName.constructor.name === "PDFRadioGroup"){
           form.getRadioGroup(element?.key).select(element?.value);
         }else{
@@ -56,7 +67,7 @@ export class AppService {
 
     const pdfBytes = await pdfDoc.save();
 
-    await writeFile('E:/projects/BFF/pdf-editor-21-01-24/example.pdf', pdfBytes);
+    await writeFile('E:/projects/BFF/pdf-editor-21-01-24/editedExample.pdf', pdfBytes);
     return "data saved successfully"
   }
 }
